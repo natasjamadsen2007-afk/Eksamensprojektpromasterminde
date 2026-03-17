@@ -20,16 +20,31 @@ BLACK = (0, 0, 0)
 # Font
 font = pygame.font.SysFont(None, 60)
 
-# Spil variabler
-ordliste = ["aften", "cykle", "farve", "flyve", "gulve"]
-hemmeligt_ord = random.choice(ordliste)
+# 🔹 Hent ord fra fil
+def hent_ord():
+    with open("ordliste.txt", "r", encoding="utf-8") as fil:
+        ordliste = fil.read().splitlines()
 
+    gyldige_ord = [
+        ord.strip().lower()
+        for ord in ordliste
+        if len(ord.strip()) == 5 and ord.isalpha()
+    ]
+
+    if not gyldige_ord:
+        raise ValueError("Ingen gyldige 5-bogstavsord fundet!")
+
+    return random.choice(gyldige_ord)
+
+hemmeligt_ord = hent_ord()
+
+# Spil variabler
 current_guess = ""
 guesses = []
 feedbacks = []
-
 max_guesses = 6
 
+# 🔹 Tegn grid
 def draw_grid():
     screen.fill(WHITE)
     for row in range(6):
@@ -57,6 +72,7 @@ def draw_grid():
                 text = font.render(letter, True, BLACK)
                 screen.blit(text, (x + 20, y + 10))
 
+# 🔹 Tjek gæt
 def check_guess(guess):
     result = []
     for i in range(5):
@@ -68,7 +84,7 @@ def check_guess(guess):
             result.append(DARK)
     return result
 
-# Game loop
+# 🔹 Game loop
 running = True
 while running:
     draw_grid()
