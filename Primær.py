@@ -20,11 +20,10 @@ BLACK = (0, 0, 0)
 # Font
 font = pygame.font.SysFont(None, 60)
 
-# 🔹 Hent ord fra fil
+# Hent ord fra fil
 def hent_ord():
     with open("ordliste.txt", "r", encoding="utf-8") as fil:
-        ordliste = fil.read().splitlines()
-
+        ordliste = fil.read().splitlines("\n")
     gyldige_ord = [
         ord.strip().lower()
         for ord in ordliste
