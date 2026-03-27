@@ -166,50 +166,55 @@ def draw_timer(start_tid):
 
 
 def draw_end_screen(vandt):
-
     screen.fill(WHITE)
 
     if vandt:
-        title="Du vandt!"
+        title = "Du vandt!"
     else:
-        title="Du tabte!"
+        title = "Du tabte!"
 
-    text=font.render(title,True,BLACK)
-    screen.blit(text,(170,50))
+    text = font.render(title, True, BLACK)
+    screen.blit(text, (150, 50))
 
-    pygame.draw.line(screen,BLACK,(50,120),(450,120),2)
+    # Lodrette stolper
+    max_val = max(stats) if max(stats) > 0 else 1
 
-    max_val=max(stats) if max(stats)>0 else 1
+    bar_width = 40
+    spacing = 20
+    start_x = 40
+    base_y = 400  # hvor stolperne starter
 
-    for i,val in enumerate(stats):
+    labels = ["1 gæt", "2 gæt", "3 gæt", "4 gæt", "5 gæt", "6 gæt", "Tabt"]  # brug "Tabt" i stedet for T
 
-        bar_w=40
-        spacing=20
+    for i, val in enumerate(stats):
+        bar_height = int((val / max_val) * 200)  # skaler højde
 
-        x=50+i*(bar_w+spacing)
-        bar_h=(val/max_val)*150
+        x = start_x + i * (bar_width + spacing)
+        y = base_y - bar_height
 
-        y=300-bar_h
+        # Stolpe
+        pygame.draw.rect(screen, GRAY, (x, y, bar_width, bar_height))
+        pygame.draw.rect(screen, BLACK, (x, y, bar_width, bar_height), 2)
 
-        pygame.draw.rect(screen,GRAY,(x,y,bar_w,bar_h))
-        pygame.draw.rect(screen,BLACK,(x,y,bar_w,bar_h),2)
+        # Label under stolpe
+        l = small_font.render(labels[i], True, BLACK)
+        l_rect = l.get_rect(center=(x + bar_width // 2, base_y + 20))
+        screen.blit(l, l_rect)
 
-        label = str(i+1) if i<6 else "T"
+        # Antal forsøg over stolpe
+        num = font.render(str(val), True, BLACK)
+        num_rect = num.get_rect(center=(x + bar_width // 2, y - 20))
+        screen.blit(num, num_rect)
 
-        l=small_font.render(label,True,BLACK)
-        screen.blit(l,(x+10,310))
-
-        num=small_font.render(str(val),True,BLACK)
-        screen.blit(num,(x+10,y-20))
-
-    button=pygame.Rect(170,380,160,60)
-
-    pygame.draw.rect(screen,GREEN,button)
-
-    t=small_font.render("Spil igen",True,BLACK)
-    screen.blit(t,(200,400))
+    # "Spil igen" knap
+    button = pygame.Rect(170, 450, 160, 60)
+    pygame.draw.rect(screen, GREEN, button)
+    t = small_font.render("Spil igen", True, BLACK)
+    t_rect = t.get_rect(center=button.center)
+    screen.blit(t, t_rect)
 
     return button
+
 
 
 state="menu"
