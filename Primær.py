@@ -15,7 +15,6 @@ GREEN = (106,170,100)
 YELLOW = (201,180,88)
 DARK = (120,124,126)
 BLACK = (0,0,0)
-RED = (200,80,80)
 
 font = pygame.font.SysFont(None,50)
 small_font = pygame.font.SysFont(None,28)
@@ -50,7 +49,8 @@ def start_spil():
         "current_guess":"",
         "guesses":[],
         "feedbacks":[],
-        "start_tid":time.time()
+        "start_tid":time.time(),
+        "slut_tid":None
     }
 
 
@@ -165,56 +165,64 @@ def draw_timer(start_tid):
     screen.blit(text,(20,20))
 
 
-def draw_end_screen(vandt):
+def draw_end_screen(vandt, spil):
+
     screen.fill(WHITE)
 
-    if vandt:
-        title = "Du vandt!"
-    else:
-        title = "Du tabte!"
-
+    title = "Du vandt!" if vandt else "Du tabte!"
     text = font.render(title, True, BLACK)
-    screen.blit(text, (150, 50))
+    screen.blit(text, (160, 40))
 
-    # Lodrette stolper
+    ord_text = small_font.render(f"Ordet var: {spil['hemmeligt_ord'].upper()}", True, BLACK)
+    screen.blit(ord_text, (170, 100))
+
+    if vandt:
+        score = len(spil["guesses"])
+        score_text = small_font.render(f"Du brugte {score} gæt", True, BLACK)
+    else:
+        score_text = small_font.render("Du brugte alle 6 gæt", True, BLACK)
+
+    screen.blit(score_text, (170, 130))
+
+    tid = int(spil["slut_tid"] - spil["start_tid"])
+    tid_text = small_font.render(f"Tid: {tid} sek", True, BLACK)
+    screen.blit(tid_text, (170, 160))
+
     max_val = max(stats) if max(stats) > 0 else 1
 
     bar_width = 40
     spacing = 20
     start_x = 40
-    base_y = 400  # hvor stolperne starter
+    base_y = 420
 
-    labels = ["1 gæt", "2 gæt", "3 gæt", "4 gæt", "5 gæt", "6 gæt", "Tabt"]  # brug "Tabt" i stedet for T
+    labels = ["1", "2", "3", "4", "5", "6", "Tabt"]
 
     for i, val in enumerate(stats):
-        bar_height = int((val / max_val) * 200)  # skaler højde
+
+        bar_height = int((val / max_val) * 200)
 
         x = start_x + i * (bar_width + spacing)
         y = base_y - bar_height
 
-        # Stolpe
         pygame.draw.rect(screen, GRAY, (x, y, bar_width, bar_height))
         pygame.draw.rect(screen, BLACK, (x, y, bar_width, bar_height), 2)
 
-        # Label under stolpe
         l = small_font.render(labels[i], True, BLACK)
         l_rect = l.get_rect(center=(x + bar_width // 2, base_y + 20))
         screen.blit(l, l_rect)
 
-        # Antal forsøg over stolpe
-        num = font.render(str(val), True, BLACK)
-        num_rect = num.get_rect(center=(x + bar_width // 2, y - 20))
+        num = small_font.render(str(val), True, BLACK)
+        num_rect = num.get_rect(center=(x + bar_width // 2, y - 15))
         screen.blit(num, num_rect)
 
-    # "Spil igen" knap
-    button = pygame.Rect(170, 450, 160, 60)
+    button = pygame.Rect(170, 520, 160, 60)
     pygame.draw.rect(screen, GREEN, button)
+
     t = small_font.render("Spil igen", True, BLACK)
     t_rect = t.get_rect(center=button.center)
     screen.blit(t, t_rect)
 
     return button
-
 
 
 state="menu"
@@ -247,7 +255,7 @@ while running:
 
     elif state=="slut":
 
-        play_button=draw_end_screen(vandt)
+        play_button=draw_end_screen(vandt, spil)
 
     pygame.display.flip()
 
@@ -284,12 +292,14 @@ while running:
 
                             stats[len(spil["guesses"])-1]+=1
                             vandt=True
+                            spil["slut_tid"]=time.time()
                             state="slut"
 
                         elif len(spil["guesses"])==6:
 
                             stats[6]+=1
                             vandt=False
+                            spil["slut_tid"]=time.time()
                             state="slut"
 
                         spil["current_guess"]=""
@@ -329,12 +339,14 @@ while running:
 
                                     stats[len(spil["guesses"])-1]+=1
                                     vandt=True
+                                    spil["slut_tid"]=time.time()
                                     state="slut"
 
                                 elif len(spil["guesses"])==6:
 
                                     stats[6]+=1
                                     vandt=False
+                                    spil["slut_tid"]=time.time()
                                     state="slut"
 
                                 spil["current_guess"]=""
