@@ -3,12 +3,14 @@ import random
 import sys
 import time
 
-pygame.init()
+pygame.init()  # Starter pygame
 
+# Sætter størrelse på vinduet
 WIDTH, HEIGHT = 500, 720
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Dansk Wordle")
+pygame.display.set_caption("Dansk Wordle")  # Titel på vinduet
 
+# Farver (RGB)
 WHITE = (255,255,255)
 GRAY = (200,200,200)
 GREEN = (106,170,100)
@@ -16,51 +18,61 @@ YELLOW = (201,180,88)
 DARK = (120,124,126)
 BLACK = (0,0,0)
 
+# Skrifttyper
 font = pygame.font.SysFont(None,50)
 small_font = pygame.font.SysFont(None,28)
 
+# Layout af keyboard
 keyboard_rows = [
     "qwertyuiopå",
     "asdfghjklæø",
     "↵zxcvbnm⌫"
 ]
 
+# Gemmer positioner af taster
 key_rects = {}
 
-stats = [0,0,0,0,0,0,0]  # 1-6 guesses + losses
+# Statistik: antal spil vundet på 1-6 forsøg + tab
+stats = [0,0,0,0,0,0,0]
 
 
 def hent_ord():
+    # Åbner fil med ordliste
     with open("ordliste.txt","r",encoding="utf-8") as fil:
         ordliste = fil.read().splitlines()
 
+    # Filtrerer så kun 5-bogstavs gyldige ord bruges
     gyldige = [
         o.strip().lower()
         for o in ordliste
         if len(o.strip()) == 5 and o.isalpha()
     ]
 
+    # Returnerer et tilfældigt ord
     return random.choice(gyldige)
 
 
 def start_spil():
+    # Opretter et nyt spil (dictionary)
     return {
-        "hemmeligt_ord": hent_ord(),
-        "current_guess":"",
-        "guesses":[],
-        "feedbacks":[],
-        "start_tid":time.time(),
-        "slut_tid":None
+        "hemmeligt_ord": hent_ord(),  # Ordet der skal gættes
+        "current_guess":"",           # Det spilleren er ved at skrive
+        "guesses":[],                 # Liste af tidligere gæt
+        "feedbacks":[],               # Farver for hvert gæt
+        "start_tid":time.time(),      # Starttid
+        "slut_tid":None               # Sluttid (når spil slutter)
     }
 
 
 def opdater_bogstaver(spil):
+    # Holder styr på hvilke bogstaver der er brugt og deres farve
     status={}
     for guess,feedback in zip(spil["guesses"],spil["feedbacks"]):
         for letter,color in zip(guess,feedback):
             if letter not in status:
                 status[letter]=color
             else:
+                # Grøn har højeste prioritet
                 if status[letter]!=GREEN:
                     status[letter]=color
     return status
@@ -68,12 +80,14 @@ def opdater_bogstaver(spil):
 
 def draw_grid(spil):
 
-    cell=60
-    gap=10
+    cell=60  # Størrelse på hver boks
+    gap=10   # Afstand mellem bokse
 
+    # Finder startposition så grid er centreret
     start_x=(WIDTH-(5*cell+4*gap))//2
     start_y=60
 
+    # Tegner 6 rækker og 5 kolonner
     for row in range(6):
         for col in range(5):
 
@@ -82,22 +96,27 @@ def draw_grid(spil):
 
             rect=pygame.Rect(x,y,cell,cell)
 
+            # Bestem farve (feedback eller tom)
             if row<len(spil["feedbacks"]):
                 color=spil["feedbacks"][row][col]
             else:
                 color=GRAY
 
+            # Tegner firkant
             pygame.draw.rect(screen,color,rect)
             pygame.draw.rect(screen,BLACK,rect,2)
 
             letter=None
 
+            # Viser tidligere gæt
             if row<len(spil["guesses"]) and col<len(spil["guesses"][row]):
                 letter=spil["guesses"][row][col]
 
+            # Viser nuværende gæt
             elif row==len(spil["guesses"]) and col<len(spil["current_guess"]):
                 letter=spil["current_guess"][col]
 
+            # Tegner bogstav hvis der er et
             if letter:
                 text=font.render(letter.upper(),True,BLACK)
                 text_rect=text.get_rect(center=rect.center)
@@ -107,8 +126,9 @@ def draw_grid(spil):
 def draw_keyboard(spil):
 
     global key_rects
-    key_rects={}
+    key_rects={}  # Nulstiller key positions
 
+    # Får status på bogstaver (farver)
     status=opdater_bogstaver(spil)
 
     start_y=500
@@ -116,27 +136,32 @@ def draw_keyboard(spil):
     key_h=45
     gap=5
 
+    # Går gennem hver række i keyboard
     for row_i,row in enumerate(keyboard_rows):
 
         row_width=len(row)*(key_w+gap)
         start_x=(WIDTH-row_width)//2
 
+        # Går gennem hver tast
         for i,letter in enumerate(row):
 
             x=start_x+i*(key_w+gap)
             y=start_y+row_i*(key_h+gap)
 
             rect=pygame.Rect(x,y,key_w,key_h)
-            key_rects[letter]=rect
+            key_rects[letter]=rect  # Gemmer position
 
             color=GRAY
 
+            # Sætter farve hvis bogstav er brugt
             if letter in status:
                 color=status[letter]
 
+            # Tegner knap
             pygame.draw.rect(screen,color,rect,border_radius=6)
             pygame.draw.rect(screen,BLACK,rect,2,border_radius=6)
 
+            # Tegner bogstav på knap
             text=small_font.render(letter.upper(),True,BLACK)
             text_rect=text.get_rect(center=rect.center)
             screen.blit(text,text_rect)
@@ -145,26 +170,26 @@ def draw_keyboard(spil):
 def check_guess(guess,hemmeligt):
 
     result=[]
+    # Sammenligner hvert bogstav
     for i in range(5):
 
         if guess[i]==hemmeligt[i]:
-            result.append(GREEN)
+            result.append(GREEN)  # Korrekt placering
 
         elif guess[i] in hemmeligt:
-            result.append(YELLOW)
+            result.append(YELLOW)  # Findes i ordet
 
         else:
-            result.append(DARK)
+            result.append(DARK)  # Findes ikke
 
     return result
 
 
 def draw_timer(start_tid):
+    # Beregner hvor lang tid der er gået
     tid=int(time.time()-start_tid)
     text=small_font.render(f"Tid: {tid}s",True,BLACK)
     screen.blit(text,(20,20))
-
-
 def draw_end_screen(vandt, spil):
     # Fylder hele skærmen med hvid baggrund
     screen.fill(WHITE)
